@@ -201,6 +201,13 @@
         overflow: hidden;
         transition: var(--transition-base);
         margin-bottom: 1.5rem;
+        cursor: pointer;
+    }
+
+    .announcement-card:hover {
+        border-left-width: 8px;
+        transform: translateX(5px);
+        box-shadow: var(--shadow-md);
     }
 
     .announcement-card::before {
@@ -772,7 +779,9 @@
 
                         @if($announcements->count() > 0)
                             @foreach($announcements->take(3) as $announcement)
-                            <div class="announcement-card">
+                            <div class="announcement-card"
+                                 data-full-content="{{ htmlspecialchars($announcement->isi, ENT_QUOTES, 'UTF-8') }}"
+                                 data-announcement-id="{{ $announcement->id }}">
                                 <div class="card-body p-3">
                                     <div class="d-flex align-items-start gap-2 mb-2">
                                         <div style="width: 40px; height: 40px; background: linear-gradient(135deg, rgba(24, 135, 46, 0.12), rgba(43, 162, 69, 0.18)); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
@@ -806,6 +815,32 @@
                             </div>
                         @endif
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Announcement Modal -->
+    <div class="modal fade" id="announcementModal" tabindex="-1" aria-labelledby="announcementModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="announcementModalLabel">Detail Pengumuman</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="announcementContent">
+                        <div class="d-flex justify-content-center align-items-center" style="min-height: 200px;">
+                            <div class="text-center">
+                                <i class="bi bi-megaphone" style="font-size: 3rem; color: #dee2e6;"></i>
+                                <p class="mt-2 text-muted">Memuat detail pengumuman...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <small class="text-muted" id="announcementDate"></small>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
                 </div>
             </div>
         </div>
@@ -846,6 +881,40 @@ document.addEventListener('DOMContentLoaded', function() {
             bootstrap.Carousel.getInstance(carousel)?.cycle();
         });
     }
+
+    // Announcement modal functionality
+    document.querySelectorAll('.announcement-card').forEach(card => {
+        card.addEventListener('click', function(e) {
+            // Don't trigger modal if the link is clicked
+            if (e.target.tagName === 'A' || e.target.closest('a')) {
+                return;
+            }
+
+            // Get announcement data from the card
+            const title = this.querySelector('.card-title').textContent.trim();
+            const excerpt = this.querySelector('.card-text').textContent.trim();
+            const date = this.querySelector('.text-muted').textContent.trim();
+
+            // Get the full content from the data attribute
+            const fullContent = this.getAttribute('data-full-content') || excerpt;
+
+            // Decode HTML entities to properly render HTML content
+            const decodeHtml = (html) => {
+                const txt = document.createElement('textarea');
+                txt.innerHTML = html;
+                return txt.value;
+            };
+
+            // Update modal content
+            document.getElementById('announcementModalLabel').textContent = title;
+            document.getElementById('announcementContent').innerHTML = `<div class="announcement-detail">${decodeHtml(fullContent)}</div>`;
+            // document.getElementById('announcementDate').textContent = date;
+
+            // Show the modal
+            const modal = new bootstrap.Modal(document.getElementById('announcementModal'));
+            modal.show();
+        });
+    });
 });
 </script>
 @endsection
